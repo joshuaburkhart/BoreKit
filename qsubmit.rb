@@ -3,7 +3,7 @@
 require 'time'
 require 'optparse'
 
-TEST = %x(qsub 2>&1)
+TEST = %x(qsub --version 2>&1)
 if(TEST.include?("command not found"))
     puts "The qsub command must be installed for this program to run."
     puts "Aborting..."
