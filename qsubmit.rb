@@ -59,7 +59,7 @@ Example:
         end
     }
     options[:modules] = nil
-    opts.on('-m','--mods MODULE1,MODULE2,MODULEN','Modules to load - List CSVs') { |modules|
+    opts.on('-m','--mods MODULE1,MODULE2,MODULEN',Array,'Modules to load - List CSVs') { |modules|
         options[:modules] = modules
     }
     options[:out_dir] = "/home11/mmiller/Wyeomyia/output/queue_out/"
