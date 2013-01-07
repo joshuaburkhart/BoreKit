@@ -12,7 +12,9 @@ end
 
 VALID_QUEUES = ["generic","gpu","fatnodes","student","longgen","longgpu","longfat","xlonggen","xlonggpu","xlongfat"]
 
-VALID_NODES = %x(qnodes | grep -Po '^[a-z]+[0-9]+').split(/\n/)
+VALID_NODES = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*[a-z]+[0-9]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
+
+INVALID_COMMANDS = ""
 
 options = {}
 optparse = OptionParser.new { |opts|
@@ -27,14 +29,14 @@ Example:
     }
     options[:cores] = 1
     opts.on('-p','--procs CORES','Number of Processor Cores CORES') { |cores|
-        if(cores >= 1 && cores <= 32)
+        if(Integer(cores) >= 1 && Integer(cores) <= 32)
             options[:cores] = cores
         else
             puts "INVALID CORES '#{cores}' MUST BE >= 1 AND <=32"
             exit
         end
     }
-    options[:qname] = options[:cores] <= 12 ? "generic" : "fatnodes"
+    options[:qname] = nil
     opts.on('-q','--queue QNAME','Name of submission queue QNAME') { |qname|
         if(VALID_QUEUES.include?(qname))
             options[:qname] = qname
@@ -87,6 +89,17 @@ Example:
 optparse.parse!
 
 command = ARGV.join(' ')
+if(INVALID_COMMANDS.include?(command))
+    puts "INVALID COMMAND '#{command}'"
+    exit
+end
+if(options[:qname].nil?)
+    if(!options[:nname].nil?)
+        puts "MUST SPECIFY QUEUE FOR NODE '#{options[:nname]}'"
+        exit
+    end
+    options[:qname] = Integer(options[:cores]) <= 12 ? "generic" : "fatnodes"
+end
 node_spec = options[:nname].nil? ? "1" : options[:nname]
 module_spec = options[:modules].nil? ? "" : options[:modules].join(' ')
 
@@ -118,6 +131,7 @@ pbs_file_handle.close
 %x(rm #{pbs_file_name})
 
 #printing job details
+puts "Command: #{command}"
 puts "Cores: #{options[:cores]}"
 puts "Queue: #{options[:qname]}"
 puts "Job Name: #{options[:jname]}"
