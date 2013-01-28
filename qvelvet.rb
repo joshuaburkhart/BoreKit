@@ -3,17 +3,14 @@
 require 'time'
 require 'optparse'
 
-
-
-
 INVALID_COMMANDS = ""
 
 options = {}
 optparse = OptionParser.new { |opts|
     opts.banner = <<-EOS
-                Usage: ruby qvelvet.rb -p </path/to/shortpaired/file/1.fastq>,</path/to/shortpaired/file/2.fastq> -s </path/to/short/unpaired/file/1.fastq>,</path/to/short/unpaired/file/n.fastq> -k <kmer hash length> -e <expected coverage> -o </path/to/output/dir>
+Usage: ruby qvelvet.rb -p </path/to/shortpaired/file/1.fastq>,</path/to/shortpaired/file/2.fastq> -s </path/to/short/unpaired/file/1.fastq>,</path/to/short/unpaired/file/n.fastq> -k <kmer hash length> -e <expected coverage> -m <min contig length> -i <insertion seq size estimate> -c <minimum coverage cutoff threshold> -x <maximum coverage cutoff threshold> -o </path/to/output/dir>
 
-                Example:
+Example:
     EOS
     opts.on('-h','--help','Display this screen'){
         puts opts
@@ -34,6 +31,22 @@ optparse = OptionParser.new { |opts|
     options[:expected_cov] = nil
     opts.on('-e','--expected COVERAGE','Expected kmer coverage (Ck)') { |expected_cov|
         options[:expected_cov] = expected_cov
+    }
+    options[:min_contig_length] = 500
+    opts.on('-m','--min_ctg LENGTH','Minimum contig length to produce') {|min_contig_length|
+        options[:min_contig_length] = min_contig_length
+    }
+    options[:ins_length] = 500
+    opts.on('-i','--ins LENGTH','Instertion sequence length estimate') {|ins_length|
+        options[:ins_length] = ins_length
+    }
+    options[:cov_cutoff] = 2
+    opts.on('-c','--cov_cut THRESHOLD','Minimum coverage cutoff threshold') {|cov_cutoff|
+        options[:cov_cutoff] = cov_cutoff
+    }
+    options[:max_coverage] = 1000
+    opts.on('-x','--max THRESHOLD','Maximum coverage cutoff threshold') {|max_coverage|
+        options[:max_coverage] = max_coverage
     }
     options[:out_dir] = "/home11/mmiller/Wyeomyia/output"
     opts.on('-o','--out OUT_DIR','Local output directory OUT_DIR') { |out_dir|
@@ -81,14 +94,27 @@ mkdir -p /scratch/$USER/\$PBS_JOBID && \
 cp #{local_pe_files} #{local_se_files} /scratch/$USER/\$PBS_JOBID/ && \
 mkdir -p /scratch/$USER/\$PBS_JOBID/#{out_subdir} && \
 velveth /scratch/$USER/\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary && \
-velvetg /scratch/$USER/\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ;
+velvetg /scratch/$USER/\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ; \
 rm -f #{remote_se_files} #{remote_pe_files}
 EOF
 
-AVAIL_NODES = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
+print "Locating capable node..."
+avail_nodes = []
+while(avail_nodes.length == 0)
+    avail_nodes = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
+    if(avail_nodes == 0)
+        print "."
+        STDOUT.flush
+        sleep(10)
+    else
+        print "Using #{avail_nodes[0]}"
+        STDOUT.flush
+    end
+end
+puts
 
-submit_command = <<-EOF
--m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}" -q longfat -n #{AVAIL_NODES[0]} -p 32 #{velvet_command}"
+submit_args = <<-EOF
+-m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}" -q longfat -n #{avail_nodes[0]} -p 32 #{velvet_command}"
 EOF
 
-stdout = %x(qsubmit.rb #{submit_command})
+stdout = %x(qsubmit.rb #{submit_args})
