@@ -100,14 +100,16 @@ EOF
 
 print "Locating capable node..."
 avail_nodes = []
+num_minutes = 0
 while(avail_nodes.length == 0)
     avail_nodes = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
-    if(avail_nodes == 0)
+    if(avail_nodes.length == 0)
         print "."
         STDOUT.flush
-        sleep(10)
+        sleep(60)
+        num_minutes += 1
     else
-        print "Using #{avail_nodes[0]}"
+        print "Using #{avail_nodes[0]} after #{num_minutes} minute wait."
         STDOUT.flush
     end
 end
