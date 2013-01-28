@@ -30,8 +30,8 @@ echo PROCS: $PROCS
 echo NODE_NAME: $NODE_NAME
 echo input directory: $inputdir
 
-wyeomyia_rq.sh \
+qsubmit.rb \
 "mkdir -p /scratch/$USER/\$PBS_JOBID/velvet_out/$inputdir && \
 cp $1/* /scratch/$USER/\$PBS_JOBID/velvet_out/$inputdir/ && \
-velvetg /scratch/$USER/\$PBS_JOBID/velvet_out/$inputdir -min_contig_lgth 500 -ins_length 400 -exp_cov $5 -cov_cutoff 5.2 -max_coverage 300" \
-$QUEUE vlvtg_$2-$3_k$4 $PROCS $NODE_NAME
+velvetg /scratch/$USER/\$PBS_JOBID/velvet_out/$inputdir -min_contig_lgth 400 -ins_length 500 -exp_cov $5 -cov_cutoff 2 -max_coverage 300" \
+-q $QUEUE -m velvet -j vlvtg_$2-$3_k$4 -p $PROCS
