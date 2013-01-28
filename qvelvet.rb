@@ -4,7 +4,7 @@ require 'time'
 require 'optparse'
 
 
-AVAIL_NODES = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
+
 
 INVALID_COMMANDS = ""
 
@@ -59,7 +59,7 @@ out_subdir = "velvet_out/velvet"
 (options[:pe_files] + options[:se_files]).each {|f|
     out_subdir = "#{out_subdir}-#{extractName(f)}"
 }
-out_subdir = "#{out_subdir}_k=#{options[:kmer_hash_length]}_e=#{expected_cov}"
+out_subdir = "#{out_subdir}_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}"
 %x(mkdir -p #{out_subdir})
 puts "Using local output directory #{options[:out_dir]}/#{out_subdir}"
 
@@ -80,9 +80,15 @@ velvet_command = <<-EOF
 mkdir -p /scratch/$USER/\$PBS_JOBID && \
 cp #{local_pe_files} #{local_se_files} /scratch/$USER/\$PBS_JOBID/ && \
 mkdir -p /scratch/$USER/\$PBS_JOBID/#{out_subdir} && \
-velveth /scratch/$USER/\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary ; \
-rm -f /scratch/$USER/\$PBS_JOBID/$inputfile1 ; \
-rm -f /scratch/$USER/\$PBS_JOBID/$inputfile2 ; \
-rm -f /scratch/$USER/\$PBS_JOBID/$inputfile3 ; \
-rm -f /scratch/$USER/\$PBS_JOBID/$inputfile4
+velveth /scratch/$USER/\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary && \
+velvetg /scratch/$USER/\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ;
+rm -f #{remote_se_files} #{remote_pe_files}
 EOF
+
+AVAIL_NODES = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
+
+submit_command = <<-EOF
+-m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}" -q longfat -n #{AVAIL_NODES[0]} -p 32 #{velvet_command}"
+EOF
+
+stdout = %x(qsubmit.rb #{submit_command})
