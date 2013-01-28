@@ -1,4 +1,4 @@
-#!/esr/bin/ruby
+#!/usr/bin/ruby
 
 require 'time'
 require 'optparse'
