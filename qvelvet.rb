@@ -64,7 +64,7 @@ Example:
 optparse.parse!
 
 def extractName(filename)
-    filename.match(/^.*?([\w_-]+?)\.\w+$/)
+    filename.match(/^.*\/([\w\._-]+)$/)
     return $1
 end
 
@@ -73,14 +73,14 @@ out_subdir = "velvet_out/velvet"
     out_subdir = "#{out_subdir}-#{extractName(f)}"
 }
 out_subdir = "#{out_subdir}_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}"
-%x(mkdir -p #{out_subdir})
+%x(mkdir -p #{options[:out_dir]}/#{out_subdir})
 puts "Using local output directory #{options[:out_dir]}/#{out_subdir}"
 
 local_pe_files = ""
 remote_pe_files = ""
 options[:pe_files].each {|f|
     local_pe_files = "#{local_pe_files} #{f}"
-    remote_pe_files = "/scratch/$USER/\$PBS_JOBID/#{extractName(f)}"
+    remote_pe_files = "/scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
 }
 local_se_files = ""
 remote_se_files = ""
@@ -89,14 +89,14 @@ options[:se_files].each {|f|
     remote_se_files = "#{remote_se_files} #{extractName(f)}"
 }
 
-velvet_command = <<-EOF
-mkdir -p /scratch/$USER/\$PBS_JOBID && \
-cp #{local_pe_files} #{local_se_files} /scratch/$USER/\$PBS_JOBID/ && \
-mkdir -p /scratch/$USER/\$PBS_JOBID/#{out_subdir} && \
-velveth /scratch/$USER/\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary && \
-velvetg /scratch/$USER/\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ; \
+velvet_command = <<-EOF1
+mkdir -p /scratch/$USER/\\$PBS_JOBID && \
+cp #{local_pe_files} #{local_se_files} /scratch/$USER/\\$PBS_JOBID/ && \
+mkdir -p /scratch/$USER/\\$PBS_JOBID/#{out_subdir} && \
+velveth /scratch/$USER/\\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary && \
+velvetg /scratch/$USER/\\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ; \
 rm -f #{remote_se_files} #{remote_pe_files}
-EOF
+EOF1
 
 print "Locating capable node..."
 avail_nodes = []
@@ -116,7 +116,9 @@ end
 puts
 
 submit_args = <<-EOF
--m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}" -q longfat -n #{avail_nodes[0]} -p 32 #{velvet_command}"
+-m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]} -q longfat -n #{avail_nodes[0]} -p 32 "#{velvet_command}"
 EOF
 
 stdout = %x(qsubmit.rb #{submit_args})
+
+puts "#{stdout}"
