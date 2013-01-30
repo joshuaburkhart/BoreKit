@@ -80,13 +80,13 @@ local_pe_files = ""
 remote_pe_files = ""
 options[:pe_files].each {|f|
     local_pe_files = "#{local_pe_files} #{f}"
-    remote_pe_files = "/scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
+    remote_pe_files = "#{remote_pe_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
 }
 local_se_files = ""
 remote_se_files = ""
 options[:se_files].each {|f|
     local_se_files = "#{local_se_files} #{f}"
-    remote_se_files = "#{remote_se_files} #{extractName(f)}"
+    remote_se_files = "#{remote_se_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
 }
 
 velvet_command = <<-EOF1
