@@ -41,7 +41,7 @@ Example:
         if(VALID_QUEUES.include?(qname))
             options[:qname] = qname
         else
-            puts "INVALID QNAME '#{qname}' NOT FOUND IN #{VAILD_QUEUES.inspect}"
+            puts "INVALID QNAME '#{qname}' NOT FOUND IN #{VALID_QUEUES.inspect}"
             exit
         end
     }
