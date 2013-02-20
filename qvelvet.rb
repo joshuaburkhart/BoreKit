@@ -69,7 +69,14 @@ def extractName(filename)
 end
 
 out_subdir = "velvet_out/velvet"
-(options[:pe_files] + options[:se_files]).each {|f|
+if(options[:pe_files].nil?)
+    tmp = options[:se_files]
+elsif(options[:se_files.nil?])
+    tmp = options[:pe_files]
+else
+    tmp = options[:pe_files] + options[:se_files]
+end
+tmp.each {|f|
     out_subdir = "#{out_subdir}-#{extractName(f)}"
 }
 out_subdir = "#{out_subdir}_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]}"
@@ -78,22 +85,27 @@ puts "Using local output directory #{options[:out_dir]}/#{out_subdir}"
 
 local_pe_files = ""
 remote_pe_files = ""
-options[:pe_files].each {|f|
-    local_pe_files = "#{local_pe_files} #{f}"
-    remote_pe_files = "#{remote_pe_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
-}
+if(!options[:pe_files].nil?)
+    options[:pe_files].each {|f|
+        local_pe_files = "#{local_pe_files} #{f}"
+        remote_pe_files = "#{remote_pe_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
+    }
+    pe_arg = "-shortPaired -separate #{remote_pe_files}"
+end
 local_se_files = ""
 remote_se_files = ""
-options[:se_files].each {|f|
-    local_se_files = "#{local_se_files} #{f}"
-    remote_se_files = "#{remote_se_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
-}
+if(!options[:se_files].nil?)
+    options[:se_files].each {|f|
+        local_se_files = "#{local_se_files} #{f}"
+        remote_se_files = "#{remote_se_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
+    }
+end
 
 velvet_command = <<-EOF1
 mkdir -p /scratch/$USER/\\$PBS_JOBID && \
 cp #{local_pe_files} #{local_se_files} /scratch/$USER/\\$PBS_JOBID/ && \
 mkdir -p /scratch/$USER/\\$PBS_JOBID/#{out_subdir} && \
-velveth /scratch/$USER/\\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} -shortPaired -separate #{remote_pe_files} -create_binary && \
+velveth /scratch/$USER/\\$PBS_JOBID/#{out_subdir} #{options[:kmer_hash_length]} -short -fastq #{remote_se_files} #{pe_arg} -create_binary && \
 velvetg /scratch/$USER/\\$PBS_JOBID/#{out_subdir} -min_contig_lgth #{options[:min_contig_length]} -ins_length #{options[:ins_length]} -exp_cov #{options[:expected_cov]} -cov_cutoff #{options[:cov_cutoff]} -max_coverage #{options[:max_coverage]} ; \
 rm -f #{remote_se_files} #{remote_pe_files}
 EOF1
@@ -109,7 +121,7 @@ while(avail_nodes.length == 0)
         sleep(60)
         num_minutes += 1
     else
-        print "Using #{avail_nodes[0]} after #{num_minutes} minute wait."
+        print "Using #{avail_nodes[rand(avail_nodes.length)]} after #{num_minutes} minute wait."
         STDOUT.flush
     end
 end

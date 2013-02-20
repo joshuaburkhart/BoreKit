@@ -131,6 +131,7 @@ pbs_file_handle.close
 %x(rm #{pbs_file_name})
 
 #printing job details
+puts
 puts "Command: #{command}"
 puts "Cores: #{options[:cores]}"
 puts "Queue: #{options[:qname]}"

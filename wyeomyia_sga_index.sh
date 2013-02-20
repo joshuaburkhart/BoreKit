@@ -26,9 +26,9 @@ echo inputfile: $inputfile
 echo indexname: $indexname
 
 mkdir -p /home11/mmiller/Wyeomyia/output/sga_out/sga_index_out/$SUBDR; \
-wyeomyia_rq.sh \
+qsubmit.rb \
 "mkdir -p /scratch/$USER/\$PBS_JOBID/sga_out/sga_index_out/$SUBDR && \
 cp $1 /scratch/$USER/\$PBS_JOBID/sga_out/sga_index_out/$SUBDR && \
 sga index -a ropebwt -t $PROCS --no-reverse /scratch/$USER/\$PBS_JOBID/sga_out/sga_index_out/$SUBDR/$inputfilei && \
 mv /home11/mmiller/Wyeomyia/output/queue_out/$indexname* /home11/mmiller/Wyeomyia/output/sga_out/sga_index_out/$SUBDR/" \
-$QUEUE sga_index $PROCS $NODE_NAME
+-q $QUEUE -m sga -j sga_index -p $PROCS
