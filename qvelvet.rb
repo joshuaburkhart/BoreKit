@@ -113,6 +113,7 @@ EOF1
 print "Locating capable node..."
 avail_nodes = []
 num_minutes = 0
+selected_node = 0
 while(avail_nodes.length == 0)
     avail_nodes = %x((echo ! && qnodes) | tr '\n' '!' | grep -Po '(?<=!)\s*fn[2-8]+(?=\s*!\s*state = [^!]*free[^!]*!)').split(/\n/)
     if(avail_nodes.length == 0)
@@ -121,14 +122,15 @@ while(avail_nodes.length == 0)
         sleep(60)
         num_minutes += 1
     else
-        print "Using #{avail_nodes[rand(avail_nodes.length)]} after #{num_minutes} minute wait."
+        selected_node = Random.new(Time.now.to_i).rand(avail_nodes.length)
+        print "Using #{avail_nodes[selected_node]} after #{num_minutes} minute wait."
         STDOUT.flush
     end
 end
 puts
 
 submit_args = <<-EOF
--m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]} -q longfat -n #{avail_nodes[0]} -p 32 "#{velvet_command}"
+-m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]} -q longfat -n #{avail_nodes[selected_node]} -p 32 "#{velvet_command}"
 EOF
 
 stdout = %x(qsubmit.rb #{submit_args})
