@@ -69,9 +69,13 @@ def extractName(filename)
 end
 
 out_subdir = "velvet_out/velvet"
-if(options[:pe_files].nil?)
+if(options[:pe_files].nil? && options[:se_files].nil?)
+    puts "Read file(s) must be specified with '-p' or '-s'"
+    puts "Aborting..."
+    exit
+elsif(options[:pe_files].nil?)
     tmp = options[:se_files]
-elsif(options[:se_files.nil?])
+elsif(options[:se_files].nil?)
     tmp = options[:pe_files]
 else
     tmp = options[:pe_files] + options[:se_files]
@@ -123,7 +127,7 @@ while(avail_nodes.length == 0)
         num_minutes += 1
     else
         selected_node = srand() % avail_nodes.length
-        print "Using #{avail_nodes[selected_node]} after #{num_minutes} minute wait."
+        print "Assigned node #{avail_nodes[selected_node]} after #{num_minutes} minute wait."
         STDOUT.flush
     end
 end
