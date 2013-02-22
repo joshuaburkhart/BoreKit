@@ -122,7 +122,7 @@ while(avail_nodes.length == 0)
         sleep(60)
         num_minutes += 1
     else
-        selected_node = Random.new(Time.now.to_i).rand(avail_nodes.length)
+        selected_node = srand() % avail_nodes.length
         print "Using #{avail_nodes[selected_node]} after #{num_minutes} minute wait."
         STDOUT.flush
     end
