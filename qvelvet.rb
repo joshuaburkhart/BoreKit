@@ -20,6 +20,10 @@ Example:
     opts.on('-p','--paired PE_FILE1,PE_FILE2',Array,'Paired end files') { |pe_files|
         options[:pe_files] = pe_files
     }
+    options[:interleaved] = nil
+    opts.on('-l','--leaved','Paired ends are interleaved') {
+        options[:interleaved] = true
+    }
     options[:se_files] = nil
     opts.on('-s','--single SE_FILE1,SE_FILEN',Array,'Single end files') { |se_files|
         options[:se_files] = se_files
@@ -95,6 +99,9 @@ if(!options[:pe_files].nil?)
         remote_pe_files = "#{remote_pe_files} /scratch/$USER/\\$PBS_JOBID/#{extractName(f)}"
     }
     pe_arg = "-shortPaired -separate #{remote_pe_files}"
+    if(options[:interleaved])
+        pe_arg = "-shortPaired #{remote_pe_files}"
+    end
 end
 local_se_files = ""
 remote_se_files = ""
