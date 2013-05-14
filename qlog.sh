@@ -18,6 +18,9 @@ touch $TMP_FILE_2
 
 trap exit_funct SIGINT
 
+echo "Begin Log: $(date)"
+echo ""
+
 echo "Current Jobs:"
 qstat -n | grep jburkhar | awk '{$5=""; $10=""; $11=""; print $0}' | tr -s [:blank:] > $TMP_FILE_1
 cat $TMP_FILE_1
