@@ -20,6 +20,7 @@ qsubmit.rb \
 -q $QUEUE \
 -p $PROCS \
 -j kmer_dst_k$3 \
+-m stacks \
 "mkdir -p /scratch/$USER/\$PBS_JOBID && \
 cp $1 /scratch/$USER/\$PBS_JOBID/ && \
 cp $2 /scratch/$USER/\$PBS_JOBID/ && \
