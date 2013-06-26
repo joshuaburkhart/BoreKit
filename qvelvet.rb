@@ -52,6 +52,10 @@ Example:
     opts.on('-x','--max THRESHOLD','Maximum coverage cutoff threshold') {|max_coverage|
         options[:max_coverage] = max_coverage
     }
+    options[:queue] = "longfat"
+    opts.on('-q','--queue QUEUE','ACISS queue for submission') {|queue|
+        options[:queue] = queue
+    }
     options[:out_dir] = "/home11/mmiller/Wyeomyia/output"
     opts.on('-o','--out OUT_DIR','Local output directory OUT_DIR') { |out_dir|
         if(File.exists? out_dir)
@@ -141,7 +145,7 @@ end
 puts
 
 submit_args = <<-EOF
--m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]} -q longfat -n #{avail_nodes[selected_node]} -p 32 "#{velvet_command}"
+-m velvet -j velvet_k=#{options[:kmer_hash_length]}_e=#{options[:expected_cov]} -q #{options[:queue]} -n #{avail_nodes[selected_node]} -p 32 "#{velvet_command}"
 EOF
 
 stdout = %x(qsubmit.rb #{submit_args})
